@@ -13,4 +13,8 @@
         <PackageReference Include="Serilog.Sinks.Console" />
         <PackageReference Include="Serilog.Settings.Configuration" />
     </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Digestron.Infra\Digestron.Infra.csproj" />
+    </ItemGroup>
 </Project>

@@ -1,5 +1,10 @@
 using Digestron.Hosting;
 using Digestron.Hosting.Options;
+using Digestron.Domain;
+using Digestron.Hosting.Handler;
+using Digestron.Infra;
+using Digestron.Service;
+using Digestron.Service.Abstractions;
 using Microsoft.Extensions.Options;
 using Serilog;
 using Telegram.Bot;
@@ -26,8 +31,13 @@ try
         return new TelegramBotClient(options.BotToken);
     });
 
-    builder.Services.AddSingleton<UpdateHandler>();
-    builder.Services.AddHostedService<BotPollingService>();
+    builder
+        .Services
+        .AddInfra(builder.Configuration)
+        .AddServices()
+        .AddSingleton<IMessageResponder, MessageResponder>()
+        .AddSingleton<UpdateHandler>()
+        .AddHostedService<BotPollingService>();
 
     var host = builder.Build();
     host.Run();

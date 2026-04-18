@@ -18,11 +18,19 @@ Phase 5: Future – Gmail support via IEmailProvider interface
 ## Non-Functional Requirements
 - Run on Azure App Service
 - Send only minimal data to Azure OpenAI: subject, sender, received date, and short bodyPreview (max 300 characters per email)
-- All secrets (Telegram token, Azure OpenAI key, Graph credentials) must be stored in Azure Key Vault or Azure App Settings (never in code)
+- All secrets (Telegram token, Azure OpenAI key) must be stored in Azure Key Vault or Azure App Settings (never in code)
 - Keep costs low (GPT-4o-mini)
 - Easy to extend for other email providers
 - Use Pull Telegram updates (no webhooks) for simplicity
 - Use Serilog for logging (console + Azure App Insights), with structured logs
+
+## Authentication Strategy
+- **Microsoft Graph**: Device Code flow (`DeviceCodeCredential`) for user sign-in
+  - Works with both personal outlook.com and work/school Microsoft 365 accounts
+  - User signs in via browser at device code URL, bot receives token automatically
+  - Tokens are in-memory only; bot requests fresh token on restart
+  - Only requires storing `ClientId` (no client secret)
+  - App registration: `TenantId = "common"`, delegated `Mail.Read` permission, public client flows enabled
 
 ## Success Criteria for MVP
 - I can talk to @DigestronBot and get a readable digest of my unread emails
