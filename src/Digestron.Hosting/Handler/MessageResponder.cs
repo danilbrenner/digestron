@@ -1,0 +1,71 @@
+using Digestron.Service.Abstractions;
+using Digestron.Domain;
+using Telegram.Bot;
+using Telegram.Bot.Types.Enums;
+
+namespace Digestron.Hosting.Handler;
+
+public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageResponder
+{
+    public Task SendStartMessageAsync(MessageContext context, CancellationToken ct) =>
+        botClient.SendMessage(
+            context.ChatId,
+            $"👋 *Welcome to Digestron!*\n\nI help you stay on top of your inbox. Use /help to see what I can do.\n\nYou're chat ID is: `{context.ChatId}`",
+            parseMode: ParseMode.MarkdownV2,
+            cancellationToken: ct);
+
+    public Task SendHelpMessageAsync(MessageContext context, CancellationToken ct) =>
+        botClient.SendMessage(
+            context.ChatId,
+            """
+            *Available commands:*
+            /start — Welcome message
+            /help — Show this help
+            /digest — Get an AI\-powered digest of your unread emails
+            /unread — Show the count of unread emails
+            """,
+            parseMode: ParseMode.MarkdownV2,
+            cancellationToken: ct);
+
+    public Task SendDigestLoadingMessageAsync(MessageContext context, CancellationToken ct) =>
+        botClient.SendMessage(
+            context.ChatId,
+            "⏳ Fetching digest...",
+            cancellationToken: ct);
+
+    public Task SendUnreadCountMessageAsync(MessageContext context, int count, CancellationToken ct) =>
+        botClient.SendMessage(
+            context.ChatId,
+            $"📬 You have *{count}* unread email(s).",
+            parseMode: ParseMode.Markdown,
+            cancellationToken: ct);
+
+    public Task SendUnknownCommandMessageAsync(MessageContext context, CancellationToken ct) =>
+        botClient.SendMessage(
+            context.ChatId,
+            "❓ Unknown command. Use /help to see available commands.",
+            cancellationToken: ct);
+
+    public async Task SendDeviceAuthenticationRequestAsync(MessageContext context, Uri verificationUri, string userCode,
+        DateTimeOffset expiresOn, CancellationToken ct)
+    {
+        var message =
+            $"""
+             🔐 *Device Code Authentication*
+
+             To sign in and grant access to your emails, visit:
+             {verificationUri}
+
+             Enter this code: `{userCode}`
+
+             The code will expire in {expiresOn.ToLocalTime():HH:mm:ss}.
+             """;
+
+
+        await botClient.SendMessage(
+            context.ChatId,
+            message,
+            parseMode: ParseMode.Markdown,
+            cancellationToken: ct);
+    }
+}

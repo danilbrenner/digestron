@@ -1,3 +1,4 @@
+using Digestron.Hosting.Handler;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
@@ -9,7 +10,7 @@ public sealed class BotPollingService(
     UpdateHandler updateHandler,
     ILogger<BotPollingService> logger) : IHostedService
 {
-    private readonly CancellationTokenSource _cts = CancellationTokenSource.CreateLinkedTokenSource();
+    private readonly CancellationTokenSource _cts = new ();
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -34,6 +35,6 @@ public sealed class BotPollingService(
     {
         logger.LogInformation("Stopping Telegram bot long-polling");
         await _cts.CancelAsync();
-        _cts?.Dispose();
+        _cts.Dispose();
     }
 }
