@@ -1,0 +1,87 @@
+# Build results
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio cache/options
+.vs/
+.vscode/
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Rider
+.idea/
+*.sln.iml
+*.DotSettings.user
+
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+.localhistory/
+
+# Local environment files
+.env
+.env.local
+*.local
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# Coverage reports
+coverage/
+*.opencover.xml
+*.coverage
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Debug files
+*.pdb
+
+# Rider specific
+.idea_modules/
+
+# ReSharper is a .NET coding add-in
+_ReSharper*/
+*.resharper.user
+*.resharper.xml
+
+# NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+
+# Publish files
+PublishProfiles/
+*.publish.xml
+*.azurePubxml
+
+# MyGet packages
+.myget/
+
+# Test results
+TestResults/

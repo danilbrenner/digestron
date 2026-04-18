@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Company>Digestron</Company>
+    <Product>Digestron</Product>
+    <RepositoryUrl>https://github.com/your-repo/digestron</RepositoryUrl>
+  </PropertyGroup>
+</Project>
