@@ -6,6 +6,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{09C8EE71-5
 	ProjectSection(SolutionItems) = preProject
 		readme.md = readme.md
 		docs\SPEC.md = docs\SPEC.md
+		docs\ARCHITECTURE.md = docs\ARCHITECTURE.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Digestron.Hosting", "src\Digestron.Hosting\Digestron.Hosting.csproj", "{7D24290C-AD37-4BF1-95C9-C2F4C2974CD2}"
