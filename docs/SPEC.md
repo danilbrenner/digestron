@@ -23,6 +23,7 @@ Phase 5: Future – Gmail support via IEmailProvider interface
 - Easy to extend for other email providers
 - Use Pull Telegram updates (no webhooks) for simplicity
 - Use Serilog for logging (console + Azure App Insights), with structured logs
+- Expose health check endpoint at `/health` using ASP.NET Core minimal APIs for container orchestration (Kubernetes, Docker Swarm)
 
 ## Authentication Strategy
 - **Microsoft Graph**: Device Code flow (`DeviceCodeCredential`) for user sign-in
@@ -35,3 +36,18 @@ Phase 5: Future – Gmail support via IEmailProvider interface
 ## Success Criteria for MVP
 - I can talk to @DigestronBot and get a readable digest of my unread emails
 - I can mark emails as read from the bot
+
+## Technical Architecture
+
+### Web API & Health Checks
+- Application uses ASP.NET Core 10 with **minimal APIs** to expose a health check endpoint
+- Health endpoint: `GET /health` → returns `{ "status": "healthy", "timestamp": "<ISO-8601>" }`
+- Minimal APIs provide lightweight HTTP routing without controllers, ideal for simple monitoring endpoints
+- Background service (`BotPollingService`) runs alongside the web API to continuously poll Telegram updates
+
+### Tech Stack
+- **Framework**: ASP.NET Core 10 (Web SDK)
+- **Telegram**: Telegram.Bot library with polling model
+- **Email**: Microsoft Graph SDK with Device Code authentication
+- **Logging**: Serilog with console sink
+- **AI**: Azure OpenAI (GPT-4o-mini)
