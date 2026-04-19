@@ -10,7 +10,7 @@ Digestron is a smart Telegram bot that connects to your Outlook (Microsoft 365 /
 - **Telegram Client**: Telegram.Bot
 - **Email Access**: Microsoft Graph SDK (Outlook)
 - **AI Layer**: Azure OpenAI (GPT-4o-mini recommended for cost & speed)
-- **Hosting**: Azure App Service
+- **Hosting**: Azure Web App (Container)
 - **Storage (optional)**: Azure Table/Blob Storage or Key Vault for tokens and settings
 
 ## Setup
@@ -55,8 +55,13 @@ The first time you send a command to the bot, you'll see a sign-in prompt:
 Enter the code in your browser → bot authenticates and fetches your unread emails.
 
 ### 4. Production Deployment (Azure)
-1. Create an **Azure App Service** (free tier available)
-2. Add **Application Settings**:
+1. Build and push the Docker image to your container registry:
+   ```bash
+   docker build -t <registry>/digestron:latest .
+   docker push <registry>/digestron:latest
+   ```
+2. Create an **Azure Web App** with **Container** publishing option (Linux)
+3. Configure it to pull from your container registry
+4. Add **Application Settings**:
    - `TelegramBot__BotToken` = your bot token
    - `Graph__ClientId` = your client ID
-3. Deploy with `dotnet publish` or GitHub Actions
