@@ -15,7 +15,7 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    var builder = Host.CreateApplicationBuilder(args);
+    var builder = WebApplication.CreateBuilder(args);
 
     builder.Services.AddSerilog((services, loggerConfig) => loggerConfig
         .ReadFrom.Configuration(builder.Configuration)
@@ -31,16 +31,19 @@ try
         return new TelegramBotClient(options.BotToken);
     });
 
-    builder
-        .Services
+    builder.Services
         .AddInfra(builder.Configuration)
         .AddServices()
         .AddSingleton<IMessageResponder, MessageResponder>()
         .AddSingleton<UpdateHandler>()
-        .AddHostedService<BotPollingService>();
+        .AddHostedService<BotPollingService>()
+        .AddHealthChecks();
 
-    var host = builder.Build();
-    host.Run();
+    var app = builder.Build();
+
+    app.MapHealthChecks("/health");
+
+    app.Run();
 }
 catch (Exception ex) when (ex is not OperationCanceledException && ex.GetType().Name != "StopTheHostException")
 {
