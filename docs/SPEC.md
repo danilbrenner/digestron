@@ -16,7 +16,7 @@ Phase 4: Button actions + marking as read
 Phase 5: Future – Gmail support via IEmailProvider interface
 
 ## Non-Functional Requirements
-- Run on Azure App Service
+- Run on Azure Web App (Container) — deployed as a Docker image published to a container registry
 - Send only minimal data to Azure OpenAI: subject, sender, received date, and short bodyPreview (max 300 characters per email)
 - All secrets (Telegram token, Azure OpenAI key) must be stored in Azure Key Vault or Azure App Settings (never in code)
 - Keep costs low (GPT-4o-mini)
