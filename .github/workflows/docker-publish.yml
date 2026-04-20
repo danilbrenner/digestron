@@ -23,9 +23,11 @@ jobs:
 
       - name: Generate tags
         id: tags
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/digestron
-          VERSION=${{ steps.version.outputs.tag }}
+          IMAGE="${DOCKERHUB_USERNAME}/digestron"
+          VERSION="${{ steps.version.outputs.tag }}"
           echo "tags=${IMAGE}:${VERSION},${IMAGE}:latest" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
