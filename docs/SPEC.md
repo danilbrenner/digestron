@@ -1,7 +1,7 @@
 # Digestron - Project Specification
 
 ## Goal
-Build a Telegram bot that fetches unread Outlook emails, creates AI-powered digests using Azure OpenAI, and allows marking emails as read.
+Build a Telegram bot that fetches unread Outlook emails, creates AI-powered digests using OpenAI, and allows marking emails as read.
 
 ## Core User Flows
 - User sends /digest → bot shows a clean summary of unread emails (grouped by priority/action items/newsletters).
@@ -11,18 +11,18 @@ Build a Telegram bot that fetches unread Outlook emails, creates AI-powered dige
 ## Phases (Incremental)
 Phase 1: Telegram bot skeleton with basic commands
 Phase 2: Microsoft Graph integration to load unread emails
-Phase 3: Azure OpenAI integration for generating digests
+Phase 3: OpenAI integration for generating digests
 Phase 4: Button actions + marking as read
 Phase 5: Future – Gmail support via IEmailProvider interface
 
 ## Non-Functional Requirements
 - Run on Azure Web App (Container) — deployed as a Docker image published to a container registry
-- Send only minimal data to Azure OpenAI: subject, sender, received date, and short bodyPreview (max 300 characters per email)
-- All secrets (Telegram token, Azure OpenAI key) must be stored in Azure Key Vault or Azure App Settings (never in code)
+- Send only minimal data to OpenAI: subject, sender, received date, and short bodyPreview (max 300 characters per email)
+- All secrets (Telegram token, OpenAI API key) must be stored in Azure Key Vault or Azure App Settings (never in code)
 - Keep costs low (GPT-4o-mini)
 - Easy to extend for other email providers
 - Use Pull Telegram updates (no webhooks) for simplicity
-- Use Serilog for logging (console + Azure App Insights), with structured logs
+- Use Serilog for logging (console), with structured logs
 - Expose health check endpoint at `/health` using ASP.NET Core minimal APIs for container orchestration (Kubernetes, Docker Swarm)
 
 ## Authentication Strategy
@@ -50,4 +50,4 @@ Phase 5: Future – Gmail support via IEmailProvider interface
 - **Telegram**: Telegram.Bot library with polling model
 - **Email**: Microsoft Graph SDK with Device Code authentication
 - **Logging**: Serilog with console sink
-- **AI**: Azure OpenAI (GPT-4o-mini)
+- **AI**: OpenAI (GPT-4o-mini)

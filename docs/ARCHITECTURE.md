@@ -194,7 +194,7 @@ dotnet user-secrets set "Graph:ClientId" "<client-id>"
 ## Logging Strategy
 
 - **Framework**: Serilog
-- **Sinks**: Console (local) → App Insights (production)
+- **Sinks**: Console (local)
 - **Context**: Structured logs with chat ID, user ID, message content
 - **Levels**: Information (default), Error, Fatal
 - **Format**: Plain text (dev) or JSON (production)
@@ -259,5 +259,5 @@ dotnet user-secrets set "Graph:ClientId" "<client-id>"
 
 ### Adding Digest Generation (AI)
 1. Create `IDigestService` abstraction
-2. Implement with Azure OpenAI
+2. Implement with OpenAI
 3. Register and inject into email commands
