@@ -19,15 +19,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Digestron.Service", "src\Di
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Digestron.Domain", "src\Digestron.Domain\Digestron.Domain.csproj", "{0A08BC95-5CA0-4E88-B7C7-C31C9EA52ED4}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tasks", "tasks", "{AE18C7B2-894A-446A-8CD5-16406B2051D6}"
-	ProjectSection(SolutionItems) = preProject
-		docs\tasks\phase-1-telegram-bot-skeleton.md = docs\tasks\phase-1-telegram-bot-skeleton.md
-		docs\tasks\phase-2-microsoft-graph-integration.md = docs\tasks\phase-2-microsoft-graph-integration.md
-		docs\tasks\phase-3-azure-openai-digest.md = docs\tasks\phase-3-azure-openai-digest.md
-		docs\tasks\phase-4-button-actions-mark-as-read.md = docs\tasks\phase-4-button-actions-mark-as-read.md
-		docs\tasks\phase-5-future-non-functional-requirements.md = docs\tasks\phase-5-future-non-functional-requirements.md
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,7 +29,6 @@ Global
 		{5AB6BEFD-DCAF-4AFA-9EC7-526E48BBB31F} = {B0365F5F-0220-4C8D-96C2-1618D2EDB58B}
 		{70A12AD3-91D9-434C-A957-6C9A0D2D4499} = {B0365F5F-0220-4C8D-96C2-1618D2EDB58B}
 		{0A08BC95-5CA0-4E88-B7C7-C31C9EA52ED4} = {B0365F5F-0220-4C8D-96C2-1618D2EDB58B}
-		{AE18C7B2-894A-446A-8CD5-16406B2051D6} = {09C8EE71-5481-44EC-BC82-DA969F9DE9D4}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{7D24290C-AD37-4BF1-95C9-C2F4C2974CD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

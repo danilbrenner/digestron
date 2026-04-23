@@ -9,7 +9,7 @@ Digestron is a smart Telegram bot that connects to your Outlook (Microsoft 365 /
 - **Backend**: C# / .NET 8+ (ASP.NET Core Web App)
 - **Telegram Client**: Telegram.Bot
 - **Email Access**: Microsoft Graph SDK (Outlook)
-- **AI Layer**: Azure OpenAI (GPT-4o-mini recommended for cost & speed)
+- **AI Layer**: OpenAI (GPT-4o-mini recommended for cost & speed)
 - **Hosting**: Docker
 - **Storage (optional)**: Environment variables or secrets file for tokens and settings
 
