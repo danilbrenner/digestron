@@ -266,12 +266,13 @@ dotnet user-secrets set "Graph:ClientId" "<client-id>"
 - **Method naming**: `<Method>_<Scenario>_<ExpectedOutcome>`
 - AutoFixture generates `MessageContext`, `EmailMessage`, and other data objects; no hand-crafted fixtures
 - Moq mocks all interfaces (`IEmailProvider`, `IMessageResponder`, `IEmailService`); arrange–act–assert structure throughout
+- Tests do not cover language features such as record equality, `with` expressions, or inheritance — these are compiler guarantees, not application logic.
 
 ### Layer-by-Layer Guidance
 
 #### Domain
 
-Domain records have no dependencies. Tests exercise value equality and `with` expressions — no mocks needed.
+Domain records have no dependencies.
 
 #### Service
 
