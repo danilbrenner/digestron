@@ -12,20 +12,20 @@ public sealed class UpdateHandler(
     ILogger<UpdateHandler> logger)
 {
     public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken ct)
-    { 
-        if (!update.ParseUpdate(out var context, out var command, out var text))
+    {
+        if (!update.ParseUpdate(out var context))
             return;
 
-        logger.LogInformation("Received message from {UserId} in chat {ChatId}: {Text}",
-            context.UserId, context.ChatId, text);
+        logger.LogInformation("Received message from {UserId} in chat {ChatId}", context.UserId, context.ChatId);
 
-        await (command switch
+        await (context.Content switch
         {
-            "/start" => messageResponder.SendStartMessageAsync(context, ct),
-            "/help" => messageResponder.SendHelpMessageAsync(context, ct),
-            "/digest" => messageResponder.SendDigestLoadingMessageAsync(context, ct),
-            "/unread" => emailService.HandleGetUnreadEmailCountAsync(context, ct),
-            _ => messageResponder.SendUnknownCommandMessageAsync(context, ct)
+            CommandMessageContent { Command: "/start" } => messageResponder.SendStartMessageAsync(context, ct),
+            CommandMessageContent { Command: "/help" } => messageResponder.SendHelpMessageAsync(context, ct),
+            CommandMessageContent { Command: "/digest" } => messageResponder.SendDigestLoadingMessageAsync(context, ct),
+            CommandMessageContent { Command: "/unread" } => emailService.HandleGetUnreadEmailCountAsync(context, ct),
+            CommandMessageContent => messageResponder.SendUnknownCommandMessageAsync(context, ct),
+            _ => Task.CompletedTask
         });
     }
 
@@ -40,13 +40,9 @@ public static class UpdateHandlerExtensions
 {
     public static bool ParseUpdate(
         this Update update,
-        [NotNullWhen(true)] out MessageContext? context,
-        [NotNullWhen(true)] out string? command,
-        [NotNullWhen(true)] out string? text)
+        [NotNullWhen(true)] out MessageContext? context)
     {
         context = null;
-        command = null;
-        text = null;
 
         if (update.Message is not { } message)
             return false;
@@ -54,14 +50,16 @@ public static class UpdateHandlerExtensions
         if (message.Text is not { } messageText)
             return false;
 
-        context = update.ToContext();
-        command = messageText.Split(' ')[0].ToLowerInvariant();
-        text = messageText;
-
+        context =
+            update.ToContext(
+                messageText.StartsWith("/")
+                    ? new CommandMessageContent(messageText.ToLowerInvariant())
+                    : new TextMessageContent(messageText)
+            );
         return true;
     }
 
-    private static MessageContext ToContext(this Update update)
+    private static MessageContext ToContext(this Update update, MessageContent content)
     {
         var message = update.Message;
         var from = message?.From;
@@ -69,7 +67,8 @@ public static class UpdateHandlerExtensions
         {
             ChatId = message?.Chat.Id ?? 0,
             UserId = from?.Id ?? 0,
-            UserName = from?.Username ?? from?.FirstName ?? "unknown"
+            UserName = from?.Username ?? from?.FirstName ?? "unknown",
+            Content = content
         };
     }
 }
