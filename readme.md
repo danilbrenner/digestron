@@ -70,3 +70,14 @@ Enter the code in your browser → bot authenticates and fetches your unread ema
      -e OpenAi__ApiKey=<your-openai-api-key> \
      digestron:latest
    ```
+3. *(Optional)* Override the OpenAI system prompt without rebuilding the image:
+   ```bash
+   docker run -d \
+     -e TelegramBot__BotToken=<your-bot-token> \
+     -e Graph__ClientId=<your-client-id> \
+     -e OpenAi__ApiKey=<your-openai-api-key> \
+     -e OpenAi__SystemPromptPath=/app/system-prompt.md \
+     -v /host/path/to/system-prompt.md:/app/system-prompt.md:ro \
+     digestron:latest
+   ```
+   When `OpenAi__SystemPromptPath` points to an existing file, it takes precedence over the embedded `system-prompt.md` bundled in the image.
