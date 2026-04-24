@@ -190,11 +190,14 @@ This design allows adding new email providers or messaging channels without modi
 ```bash
 dotnet user-secrets set "TelegramBot:BotToken" "<token>"
 dotnet user-secrets set "Graph:ClientId" "<client-id>"
+dotnet user-secrets set "OpenAi:ApiKey" "<openai-api-key>"
 ```
 
 ### Azure App Settings (Production)
 - `TelegramBot__BotToken` - Telegram bot API token
 - `Graph__ClientId` - Microsoft Entra ID app client ID
+- `OpenAi__ApiKey` - OpenAI API key
+- `OpenAi__Model` - OpenAI model (default: `gpt-4o-mini`)
 
 ## Logging Strategy
 

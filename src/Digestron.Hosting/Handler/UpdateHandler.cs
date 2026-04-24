@@ -22,7 +22,7 @@ public sealed class UpdateHandler(
         {
             CommandMessageContent { Command: "/start" } => messageResponder.SendStartMessageAsync(context, ct),
             CommandMessageContent { Command: "/help" } => messageResponder.SendHelpMessageAsync(context, ct),
-            CommandMessageContent { Command: "/digest" } => messageResponder.SendDigestLoadingMessageAsync(context, ct),
+            CommandMessageContent { Command: "/digest" } => emailService.HandleDigestAsync(context, ct),
             CommandMessageContent { Command: "/unread" } => emailService.HandleGetUnreadEmailCountAsync(context, ct),
             CommandMessageContent => messageResponder.SendUnknownCommandMessageAsync(context, ct),
             _ => Task.CompletedTask

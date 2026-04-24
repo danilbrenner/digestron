@@ -37,11 +37,11 @@ public class UpdateHandlerTests
     }
 
     [Fact]
-    public async Task HandleUpdateAsync_DigestCommand_CallsSendDigestLoadingMessage()
+    public async Task HandleUpdateAsync_DigestCommand_CallsHandleDigestAsync()
     {
         await _sut.HandleUpdateAsync(Mock.Of<ITelegramBotClient>(), BuildTextUpdate("/digest"), default);
 
-        _messageResponder.Verify(r => r.SendDigestLoadingMessageAsync(It.IsAny<MessageContext>(), It.IsAny<CancellationToken>()), Times.Once);
+        _emailService.Verify(s => s.HandleDigestAsync(It.IsAny<MessageContext>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

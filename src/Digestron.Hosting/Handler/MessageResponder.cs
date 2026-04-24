@@ -68,4 +68,11 @@ public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageRes
             parseMode: ParseMode.Markdown,
             cancellationToken: ct);
     }
+
+    public Task SendDigestAsync(MessageContext context, string markdownText, CancellationToken ct) =>
+        botClient.SendMessage(
+            context.ChatId,
+            markdownText,
+            parseMode: ParseMode.Markdown,
+            cancellationToken: ct);
 }
