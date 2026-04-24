@@ -26,6 +26,11 @@ src/
     ├── Handler/                    # UpdateHandler, MessageResponder
     ├── Options/
     └── Program.cs                  # Entry point, DI composition
+tests/
+└── Digestron.Tests/                # Unit tests
+    ├── Domain/                     # Value semantics of domain records
+    ├── Service/                    # EmailService business logic
+    └── Hosting/                    # UpdateHandler routing and ParseUpdate parsing
 ```
 
 ## Dependency Flow
@@ -244,6 +249,43 @@ dotnet user-secrets set "Graph:ClientId" "<client-id>"
 - **Graph Errors**: Device code flow re-prompts on auth failure
 - **Host Errors**: Caught at top-level, logged as fatal, graceful shutdown
 - **No retries**: Polling is continuous; errors don't stop the service
+
+## Testing
+
+### Stack
+
+| Library | Role |
+|---------|------|
+| **xUnit** | Test runner and assertion framework |
+| **AutoFixture** | Generates randomized, realistic test data to eliminate manual fixture setup |
+| **Moq** | Mocks interfaces and verifies interactions |
+
+### Conventions
+
+- **Test class naming**: `<SubjectUnderTest>Tests` (e.g. `EmailServiceTests`)
+- **Method naming**: `<Method>_<Scenario>_<ExpectedOutcome>`
+- AutoFixture generates `MessageContext`, `EmailMessage`, and other data objects; no hand-crafted fixtures
+- Moq mocks all interfaces (`IEmailProvider`, `IMessageResponder`, `IEmailService`); arrange–act–assert structure throughout
+
+### Layer-by-Layer Guidance
+
+#### Domain
+
+Domain records have no dependencies. Tests exercise value equality and `with` expressions — no mocks needed.
+
+#### Service
+
+Services are tested in isolation with dependencies mocked. AutoFixture creates input data. Scenarios focus on verifying the correct responder method is called with the correct arguments.
+
+#### Hosting
+
+`UpdateHandler.HandleUpdateAsync` is tested by constructing `Telegram.Bot.Types.Update` objects and verifying the correct service or responder method is called via Moq. `UpdateHandlerExtensions.ParseUpdate` is tested as a pure function. Key scenarios: each known command routes to the right dependency; unrecognised commands fall through to `SendUnknownCommandMessageAsync`; updates without `Message` or `Text` are silently dropped.
+
+### What Is Not Unit-Tested
+
+- **`GraphEmailProvider`** — tightly coupled to the Microsoft Graph SDK; covered by integration tests.
+- **`BotPollingService`** — wraps Telegram SDK lifecycle; covered by end-to-end or smoke tests.
+- **`Program.cs`** — DI composition root; validated by the production build.
 
 ## Future Extensibility
 
