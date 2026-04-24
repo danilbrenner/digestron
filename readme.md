@@ -43,6 +43,9 @@ dotnet user-secrets set "TelegramBot:BotToken" "<your-bot-token>"
 # Store Microsoft Graph client ID
 dotnet user-secrets set "Graph:ClientId" "<your-client-id>"
 
+# Store OpenAI API key
+dotnet user-secrets set "OpenAi:ApiKey" "<your-openai-api-key>"
+
 # Run the bot
 dotnet run
 ```
@@ -64,5 +67,6 @@ Enter the code in your browser → bot authenticates and fetches your unread ema
    docker run -d \
      -e TelegramBot__BotToken=<your-bot-token> \
      -e Graph__ClientId=<your-client-id> \
+     -e OpenAi__ApiKey=<your-openai-api-key> \
      digestron:latest
    ```

@@ -1,4 +1,4 @@
-using Digestron.Domain;
+using Digestron.Infra.Digest;
 using Digestron.Infra.Email;
 using Digestron.Infra.Options;
 using Digestron.Service.Abstractions;
@@ -12,6 +12,8 @@ public static class InfraSetup
     public static IServiceCollection AddInfra(this IServiceCollection services, IConfiguration configuration)
         => services
             .Configure<GraphOptions>(configuration.GetSection(GraphOptions.SectionName))
-            .AddSingleton<IEmailProvider, GraphEmailProvider>();
+            .Configure<OpenAiOptions>(configuration.GetSection(OpenAiOptions.SectionName))
+            .AddSingleton<IEmailProvider, GraphEmailProvider>()
+            .AddTransient<IDigestService, OpenAiDigestService>();
 }
 
