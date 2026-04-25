@@ -1,4 +1,4 @@
-# Phase 4: Button Actions & Mark as Read
+# Phase 5: Button Actions & Mark as Read
 
 - [ ] **p4-mark-read-interface** — Add MarkAsReadAsync to IEmailProvider  
   Extend `IEmailProvider` in `Digestron.Domain` with `MarkAsReadAsync(IReadOnlyList<string> emailIds)`. Update `GraphEmailProvider` to `PATCH /me/messages/{id}` with `isRead=true` for each ID.

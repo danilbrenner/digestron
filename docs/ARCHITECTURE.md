@@ -19,6 +19,7 @@ src/
 │   ├── Services/
 │   └── ServicesSetup.cs            # DI registration
 ├── Digestron.Infra/                # Infrastructure & integrations
+│   ├── Digest/                     # OpenAiDigestService + system-prompt.md (embedded resource)
 │   ├── Email/                      # GraphEmailProvider (Microsoft Graph)
 │   ├── Options/
 │   └── InfraSetup.cs               # DI registration
@@ -90,11 +91,12 @@ UpdateHandler.HandleUpdateAsync()
 ParseUpdate() - Extract command, text, MessageContext
     ↓
 Switch on command:
-    ├─ "/start"   → messageResponder.SendStartMessageAsync()
-    ├─ "/help"    → messageResponder.SendHelpMessageAsync()
-    ├─ "/digest"  → messageResponder.SendDigestLoadingMessageAsync()
-    ├─ "/unread"  → emailService.HandleGetUnreadEmailCountAsync()
-    └─ other      → messageResponder.SendUnknownCommandMessageAsync()
+    ├─ "/start"          → messageResponder.SendStartMessageAsync()
+    ├─ "/help"           → messageResponder.SendHelpMessageAsync()
+    ├─ "/digest"         → emailService.HandleDigestAsync()
+    ├─ "/unread"         → emailService.HandleGetUnreadEmailCountAsync()
+    ├─ "/reload-prompt"  → digestService.ReloadPrompt() + messageResponder.SendPromptReloadedMessageAsync()
+    └─ other             → messageResponder.SendUnknownCommandMessageAsync()
 ```
 
 ### 4. Email Service Flow (IEmailService)
@@ -147,8 +149,72 @@ First time user sends /unread:
 - **IEmailProvider** - Abstract email source (enables Gmail, IMAP later)
 - **IMessageResponder** - Abstract Telegram communication
 - **IEmailService** - High-level email operations
+- **IDigestService** - AI digest generation; also exposes `ReloadPrompt()` for cache invalidation
 
 This design allows adding new email providers or messaging channels without modifying service logic.
+
+## AI Digest Flow
+
+```
+User sends /digest
+    ↓
+EmailService.HandleDigestAsync()
+    ↓
+messageResponder.SendDigestLoadingMessageAsync()   ← immediate feedback
+    ↓
+emailProvider.GetUnreadEmailsAsync(max: 100)
+    ↓
+digestService.GenerateDigestAsync(emails)
+    ↓
+OpenAiDigestService
+    ├─ Builds user prompt (subject, sender, receivedAt, bodyPreview ≤300 chars)
+    ├─ Calls OpenAI Chat Completions API (JSON mode)
+    ├─ Logs total token usage at Information level
+    └─ Parses JSON → DigestResult { MarkdownText, SuggestedReadIds }
+    ↓
+messageResponder.SendDigestAsync(markdownText)     ← parse_mode: Markdown
+```
+
+### System Prompt File
+
+The OpenAI system prompt is stored as an **embedded resource** at `Digestron.Infra/Digest/system-prompt.md`. It is:
+- Loaded **once on startup and cached** in `OpenAiDigestService`
+- Reloadable at runtime via `/reload-prompt` command (re-reads the file and updates cache)
+- Written in Markdown for readability and easy editing
+- Never hardcoded in C# source — changes to the prompt require no recompilation of business logic
+
+#### Overriding the System Prompt in Docker
+
+To replace the prompt without rebuilding the image, set `OpenAi__SystemPromptPath` to a path inside the container and mount your custom file there:
+
+```bash
+docker run -d \
+  -e OpenAi__SystemPromptPath=/app/system-prompt.md \
+  -v /host/path/to/system-prompt.md:/app/system-prompt.md:ro \
+  digestron:latest
+```
+
+`OpenAiDigestService` checks `OpenAiOptions.SystemPromptPath` first; if the file exists it is used, otherwise the embedded resource is the fallback. Either way, the result is cached after the first load.
+
+#### Reloading the Prompt at Runtime
+
+When a user sends `/reload-prompt`, `UpdateHandler` calls `IDigestService.ReloadPrompt()` which **immediately re-reads** the prompt from the configured source (mounted file or embedded resource) and updates the cache. `/digest` never touches the prompt file — it always uses whatever is already cached.
+
+A confirmation is sent via `IMessageResponder.SendPromptReloadedMessageAsync()`.
+
+This allows updating a mounted `system-prompt.md` and picking up the change without restarting the container.
+
+### Token Usage
+
+`TotalTokenCount` from `ChatCompletion.Usage` is read directly from the API response (no extra call) and stored in `DigestResult.TotalTokens`. `MessageResponder` appends it as a footer to the Telegram message, e.g.:
+
+```
+... digest text ...
+
+_🔢 Tokens used: 312_
+```
+
+This surfaces cost information to the user without requiring separate log monitoring.
 
 ## Configuration
 
@@ -293,17 +359,12 @@ Services are tested in isolation with dependencies mocked. AutoFixture creates i
 
 ## Future Extensibility
 
-### Adding Gmail Support
-1. Create `GmailEmailProvider : IEmailProvider`
-2. Register in `InfraSetup.cs`
-3. No changes needed in `UpdateHandler` or other layers
-
-### Adding Button Actions
+### Adding Button Actions (Phase 5)
 1. Create handler for `UpdateType.CallbackQuery`
 2. Register in `BotPollingService.ReceiverOptions`
 3. Route in `UpdateHandler`
 
-### Adding Digest Generation (AI)
-1. Create `IDigestService` abstraction
-2. Implement with OpenAI
-3. Register and inject into email commands
+### Adding Gmail Support (Phase 6)
+1. Create `GmailEmailProvider : IEmailProvider`
+2. Register in `InfraSetup.cs`
+3. No changes needed in `UpdateHandler` or other layers

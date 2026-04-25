@@ -23,6 +23,7 @@ public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageRes
             /help — Show this help
             /digest — Get an AI\-powered digest of your unread emails
             /unread — Show the count of unread emails
+            /reloadprompt — Reload the AI system prompt from disk
             """,
             parseMode: ParseMode.MarkdownV2,
             cancellationToken: ct);
@@ -69,10 +70,22 @@ public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageRes
             cancellationToken: ct);
     }
 
-    public Task SendDigestAsync(MessageContext context, string markdownText, CancellationToken ct) =>
+    public Task SendDigestAsync(MessageContext context, string markdownText, int totalTokens, CancellationToken ct)
+    {
+        var text = totalTokens > 0
+            ? $"{markdownText}\n\n_🔢 Tokens used: {totalTokens}_"
+            : markdownText;
+
+        return botClient.SendMessage(
+            context.ChatId,
+            text,
+            parseMode: ParseMode.Markdown,
+            cancellationToken: ct);
+    }
+
+    public Task SendPromptReloadedMessageAsync(MessageContext context, CancellationToken ct) =>
         botClient.SendMessage(
             context.ChatId,
-            markdownText,
-            parseMode: ParseMode.Markdown,
+            "✅ System prompt reloaded.",
             cancellationToken: ct);
 }

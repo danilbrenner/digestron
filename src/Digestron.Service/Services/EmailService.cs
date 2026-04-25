@@ -34,13 +34,14 @@ public class EmailService(
 
         if (emails.Count == 0)
         {
-            await messageResponder.SendDigestAsync(context, "✅ Your inbox is empty — no unread emails!", ct);
+            await messageResponder.SendDigestAsync(context, "✅ Your inbox is empty — no unread emails!", 0, ct);
             return;
         }
 
         var result = await digestService.GenerateDigestAsync(emails, ct);
-        logger.LogInformation("Generated digest with {SuggestedCount} low-priority IDs", result.SuggestedReadIds.Count);
+        logger.LogInformation("Generated digest with {SuggestedCount} low-priority IDs. Tokens used: {TotalTokens}",
+            result.SuggestedReadIds.Count, result.TotalTokens);
 
-        await messageResponder.SendDigestAsync(context, result.MarkdownText, ct);
+        await messageResponder.SendDigestAsync(context, result.MarkdownText, result.TotalTokens, ct);
     }
 }

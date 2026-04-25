@@ -8,6 +8,7 @@ namespace Digestron.Hosting.Handler;
 
 public sealed class UpdateHandler(
     IEmailService emailService,
+    IDigestService digestService,
     IMessageResponder messageResponder,
     ILogger<UpdateHandler> logger)
 {
@@ -24,6 +25,7 @@ public sealed class UpdateHandler(
             CommandMessageContent { Command: "/help" } => messageResponder.SendHelpMessageAsync(context, ct),
             CommandMessageContent { Command: "/digest" } => emailService.HandleDigestAsync(context, ct),
             CommandMessageContent { Command: "/unread" } => emailService.HandleGetUnreadEmailCountAsync(context, ct),
+            CommandMessageContent { Command: "/reloadprompt" } => HandleReloadPromptAsync(context, ct),
             CommandMessageContent => messageResponder.SendUnknownCommandMessageAsync(context, ct),
             _ => Task.CompletedTask
         });
@@ -33,6 +35,12 @@ public sealed class UpdateHandler(
     {
         logger.LogError(exception, "Telegram polling error");
         return Task.CompletedTask;
+    }
+
+    private async Task HandleReloadPromptAsync(MessageContext context, CancellationToken ct)
+    {
+        await digestService.ReloadPrompt();
+        await messageResponder.SendPromptReloadedMessageAsync(context, ct);
     }
 }
 

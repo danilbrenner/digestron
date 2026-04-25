@@ -6,14 +6,15 @@ Build a Telegram bot that fetches unread Outlook emails, creates AI-powered dige
 ## Core User Flows
 - User sends /digest → bot shows a clean summary of unread emails (grouped by priority/action items/newsletters).
 - Bot offers buttons to mark suggested low-priority emails as read.
-- Commands: /start, /help, /digest, /unread.
+- Commands: /start, /help, /digest, /unread, /reload-prompt.
 
 ## Phases (Incremental)
 Phase 1: Telegram bot skeleton with basic commands
 Phase 2: Microsoft Graph integration to load unread emails
 Phase 3: OpenAI integration for generating digests
-Phase 4: Button actions + marking as read
-Phase 5: Future – Gmail support via IEmailProvider interface
+Phase 4: System prompt management (file, caching, hot-reload)
+Phase 5: Button actions + marking as read
+Phase 6: Future – Gmail support via IEmailProvider interface
 
 ## Non-Functional Requirements
 - Run on Azure Web App (Container) — deployed as a Docker image published to a container registry
@@ -24,6 +25,8 @@ Phase 5: Future – Gmail support via IEmailProvider interface
 - Use Pull Telegram updates (no webhooks) for simplicity
 - Use Serilog for logging (console), with structured logs
 - Expose health check endpoint at `/health` using ASP.NET Core minimal APIs for container orchestration (Kubernetes, Docker Swarm)
+- The OpenAI system prompt must live in a dedicated `system-prompt.md` file (embedded resource in `Digestron.Infra`), not hardcoded in source; cached after first load; can be overridden at runtime via `OpenAi__SystemPromptPath` (Docker volume mount) without rebuilding the image
+- Log total OpenAI token usage (`TotalTokenCount`) after each digest call at `Information` level for cost monitoring; also surface it to the user as a footer in the Telegram digest message
 
 ## Authentication Strategy
 - **Microsoft Graph**: Device Code flow (`DeviceCodeCredential`) for user sign-in
