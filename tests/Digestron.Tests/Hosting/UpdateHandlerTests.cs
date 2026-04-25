@@ -94,7 +94,7 @@ public class UpdateHandlerTests
     [Fact]
     public async Task HandleUpdateAsync_ReloadPromptCommand_CallsReloadPromptAndSendsConfirmation()
     {
-        await _sut.HandleUpdateAsync(Mock.Of<ITelegramBotClient>(), BuildTextUpdate("/reload-prompt"), default);
+        await _sut.HandleUpdateAsync(Mock.Of<ITelegramBotClient>(), BuildTextUpdate("/reloadprompt"), default);
 
         _digestService.Verify(s => s.ReloadPrompt(), Times.Once);
         _messageResponder.Verify(r => r.SendPromptReloadedMessageAsync(It.IsAny<MessageContext>(), It.IsAny<CancellationToken>()), Times.Once);
