@@ -75,7 +75,7 @@ public class EmailServiceTests
             r => r.SendDigestLoadingMessageAsync(context, It.IsAny<CancellationToken>()),
             Times.Once);
         _messageResponder.Verify(
-            r => r.SendDigestAsync(context, digestResult.MarkdownText, It.IsAny<CancellationToken>()),
+            r => r.SendDigestAsync(context, digestResult.MarkdownText, digestResult.TotalTokens, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -92,7 +92,7 @@ public class EmailServiceTests
 
         _digestService.VerifyNoOtherCalls();
         _messageResponder.Verify(
-            r => r.SendDigestAsync(context, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            r => r.SendDigestAsync(context, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

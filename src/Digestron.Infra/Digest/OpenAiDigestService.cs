@@ -21,6 +21,14 @@ public sealed class OpenAiDigestService(
         PropertyNameCaseInsensitive = true
     };
 
+    private volatile string? _systemPrompt;
+
+    public async Task ReloadPrompt()
+    {
+        _systemPrompt = await LoadPrompt();
+        logger.LogInformation("System prompt reloaded");
+    }
+
     public async Task<DigestResult> GenerateDigestAsync(
         IReadOnlyList<EmailMessage> emails,
         CancellationToken ct = default)
@@ -35,16 +43,17 @@ public sealed class OpenAiDigestService(
 
         ChatCompletion completion = await chatClient.CompleteChatAsync(
             [
-                new SystemChatMessage(SystemPrompt),
+                new SystemChatMessage(_systemPrompt ?? await LoadPrompt()),
                 new UserChatMessage(userPrompt)
             ],
             new ChatCompletionOptions { ResponseFormat = ChatResponseFormat.CreateJsonObjectFormat() },
             ct);
 
-        var responseText = completion.Content[0].Text;
-        logger.LogInformation("Received AI digest response");
+        var totalTokens = completion.Usage?.TotalTokenCount ?? 0;
+        logger.LogInformation("Received AI digest response. Total tokens used: {TotalTokens}", totalTokens);
 
-        return ParseResponse(responseText);
+        var responseText = completion.Content[0].Text;
+        return ParseResponse(responseText, totalTokens);
     }
 
     private static string BuildUserPrompt(IReadOnlyList<EmailMessage> emails)
@@ -70,28 +79,24 @@ public sealed class OpenAiDigestService(
         return sb.ToString();
     }
 
-    private static DigestResult ParseResponse(string responseText)
+    private static DigestResult ParseResponse(string responseText, int totalTokens)
     {
         var response = JsonSerializer.Deserialize<OpenAiDigestResponse>(responseText, JsonOptions);
 
         return new DigestResult(
             response?.MarkdownText ?? responseText,
-            response?.SuggestedReadIds ?? []);
+            response?.SuggestedReadIds ?? [],
+            totalTokens);
     }
 
-    private const string SystemPrompt = """
-        You are an email digest assistant. Analyze the provided emails and create a concise, actionable digest.
-        Return a JSON object with exactly these two fields:
-        1. "markdownText": A markdown-formatted digest that groups emails into sections:
-           - 🔴 *Action Required* — emails needing a response or action
-           - 📌 *FYI / Important* — informational emails worth reading
-           - 📰 *Newsletters & Low Priority* — bulk mail, newsletters, promotions
-           Each section lists relevant emails with their subject and sender.
-           Keep it concise and scannable. Use Telegram-compatible Markdown (no HTML, no tables).
-        2. "suggestedReadIds": An array of email ID strings for low-priority emails that can be safely marked as read (newsletters, promotions, notifications).
-        """;
+    private Task<string> LoadPrompt()
+    {
+        return File.ReadAllTextAsync("system-prompt.md");
+    }
 
     private sealed record OpenAiDigestResponse(
-        [property: JsonPropertyName("markdownText")] string MarkdownText,
-        [property: JsonPropertyName("suggestedReadIds")] List<string> SuggestedReadIds);
+        [property: JsonPropertyName("markdownText")]
+        string MarkdownText,
+        [property: JsonPropertyName("suggestedReadIds")]
+        List<string> SuggestedReadIds);
 }

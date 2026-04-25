@@ -14,6 +14,6 @@ public static class InfraSetup
             .Configure<GraphOptions>(configuration.GetSection(GraphOptions.SectionName))
             .Configure<OpenAiOptions>(configuration.GetSection(OpenAiOptions.SectionName))
             .AddSingleton<IEmailProvider, GraphEmailProvider>()
-            .AddTransient<IDigestService, OpenAiDigestService>();
+            .AddSingleton<IDigestService, OpenAiDigestService>();
 }
 

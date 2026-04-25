@@ -16,4 +16,10 @@
     <ItemGroup>
         <ProjectReference Include="..\Digestron.Infra\Digestron.Infra.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="system-prompt.md">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </EmbeddedResource>
+    </ItemGroup>
 </Project>

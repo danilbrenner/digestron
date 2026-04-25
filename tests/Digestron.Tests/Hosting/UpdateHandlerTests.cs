@@ -9,6 +9,7 @@ namespace Digestron.Tests.Hosting;
 public class UpdateHandlerTests
 {
     private readonly Mock<IEmailService> _emailService = new();
+    private readonly Mock<IDigestService> _digestService = new();
     private readonly Mock<IMessageResponder> _messageResponder = new();
     private readonly UpdateHandler _sut;
 
@@ -16,6 +17,7 @@ public class UpdateHandlerTests
     {
         _sut = new UpdateHandler(
             _emailService.Object,
+            _digestService.Object,
             _messageResponder.Object,
             Mock.Of<ILogger<UpdateHandler>>());
     }
@@ -87,6 +89,23 @@ public class UpdateHandlerTests
 
         _messageResponder.VerifyNoOtherCalls();
         _emailService.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task HandleUpdateAsync_ReloadPromptCommand_CallsReloadPromptAndSendsConfirmation()
+    {
+        await _sut.HandleUpdateAsync(Mock.Of<ITelegramBotClient>(), BuildTextUpdate("/reload-prompt"), default);
+
+        _digestService.Verify(s => s.ReloadPrompt(), Times.Once);
+        _messageResponder.Verify(r => r.SendPromptReloadedMessageAsync(It.IsAny<MessageContext>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleUpdateAsync_UnknownCommand_DoesNotCallReloadPrompt()
+    {
+        await _sut.HandleUpdateAsync(Mock.Of<ITelegramBotClient>(), BuildTextUpdate("/unknown"), default);
+
+        _digestService.Verify(s => s.ReloadPrompt(), Times.Never);
     }
 
     private static Update BuildTextUpdate(string text) => new()
