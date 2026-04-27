@@ -305,11 +305,11 @@ dotnet user-secrets set "OpenAi:ApiKey" "<openai-api-key>"
 | Pattern | Location | Purpose |
 |---------|----------|---------|
 | **Dependency Injection** | Program.cs | Loose coupling, testability |
-| **Hosted Service** | BotPollingService | Long-running background work |
+| **Hosted Service** | BotPollingService, ScheduledDigestService | Long-running background work |
 | **Provider Pattern** | IEmailProvider | Abstraction for extensibility |
 | **Repository Pattern** | IEmailProvider | Data access abstraction |
 | **Decorator/Extension** | UpdateHandlerExtensions | Add parsing behavior |
-| **Options Pattern** | TelegramBotOptions, GraphOptions | Configuration management |
+| **Options Pattern** | TelegramBotOptions, GraphOptions, ScheduleOptions | Configuration management |
 | **Record Types** | EmailMessage, MessageContext | Immutable data structures |
 
 ## Error Handling
@@ -358,6 +358,44 @@ Services are tested in isolation with dependencies mocked. AutoFixture creates i
 - **`Program.cs`** — DI composition root; validated by the production build.
 
 ## Future Extensibility
+
+### Adding Scheduled Digest Delivery
+
+#### New Component: ScheduledDigestService
+A second `IHostedService` (`ScheduledDigestService`) runs alongside `BotPollingService` and fires the digest pipeline on a fixed schedule.
+
+```
+ScheduledDigestService (IHostedService)
+    ↓
+Waits for next delivery time (PeriodicTimer or manual timer loop)
+    ↓
+IEmailProvider.GetAuthenticatedChatIds()   ← returns all chats with a live GraphServiceClient
+    ↓
+For each ChatId:
+    EmailService.HandleDigestAsync(chatId)  ← same flow as /digest command
+    (errors logged, next chat continues)
+```
+
+#### Configuration
+`ScheduleOptions` (bound from `appsettings.json` under `Schedule:`):
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `Schedule:DeliveryTimesUtc` | `string[]` | `["08:00","18:00"]` | UTC times to deliver digests each day |
+
+#### IEmailProvider Extension
+`IEmailProvider` gains one additional method:
+```csharp
+IReadOnlyCollection<ChatId> GetAuthenticatedChatIds();
+```
+`GraphEmailProvider` implements it by returning the keys of the existing `ConcurrentDictionary<ChatId, GraphServiceClient>`. No persistence or new infrastructure required.
+
+#### Design Patterns Added
+
+| Pattern | Location | Purpose |
+|---------|----------|---------|
+| **Hosted Service** | ScheduledDigestService | Twice-daily background trigger |
+| **Options Pattern** | ScheduleOptions | Delivery time configuration |
 
 ### Adding Button Actions (Phase 5)
 1. Create handler for `UpdateType.CallbackQuery`

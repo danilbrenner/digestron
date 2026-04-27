@@ -15,7 +15,8 @@ Phase 3: OpenAI integration for generating digests
 Phase 4: System prompt management (file, caching, hot-reload)
 Phase 5: Button actions + marking as read
 Phase 6: Edit messages in place instead of sending new ones
-Phase 7: Future – Gmail support via IEmailProvider interface
+Phase 7: Scheduled digest delivery (twice-daily push to all registered chats)
+Phase 8: Future – Gmail support via IEmailProvider interface
 
 ## Non-Functional Requirements
 - Run on Azure Web App (Container) — deployed as a Docker image published to a container registry
@@ -40,6 +41,31 @@ Phase 7: Future – Gmail support via IEmailProvider interface
 ## Success Criteria for MVP
 - I can talk to @DigestronBot and get a readable digest of my unread emails
 - I can mark emails as read from the bot
+
+## Scheduled Digest Delivery
+
+### Overview
+Twice a day, a background job automatically pushes a digest to every chat that has an active Microsoft Graph connection (i.e., has completed Device Code authentication). No new commands or explicit registration are required.
+
+### What "Registered" Means
+A chat is considered registered if and only if it has a live, authenticated `GraphServiceClient` in the in-memory authentication cache. Chats that have not signed in, or whose bot session has been restarted and not re-authenticated, are silently skipped.
+
+### Schedule
+- Two fixed delivery times per day, configurable via `Schedule:DeliveryTimesUtc` (default: `["08:00", "18:00"]`).
+- The scheduler operates in UTC.
+- Times are validated at startup; an invalid value logs an error and falls back to the defaults.
+
+### Delivery Flow
+1. `ScheduledDigestService` (IHostedService) wakes at each configured delivery time.
+2. It queries `IEmailProvider` for all chat IDs that currently hold an authenticated session.
+3. For each chat, it runs the same digest pipeline used by the `/digest` command (`IEmailService.HandleDigestAsync()`).
+4. Errors for individual chats are logged and skipped — they do not stop delivery to other chats.
+5. Delivery runs sequentially per chat to avoid overwhelming the OpenAI and Graph APIs.
+
+### Non-Functional Constraints
+- No new bot commands are introduced by this feature.
+- Token usage per scheduled digest is logged at `Information` level, identical to on-demand digests.
+- Because registration is in-memory only, authenticated chats must re-authenticate after a bot restart before they receive scheduled digests again.
 
 ## Technical Architecture
 
