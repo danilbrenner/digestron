@@ -14,7 +14,8 @@ Phase 2: Microsoft Graph integration to load unread emails
 Phase 3: OpenAI integration for generating digests
 Phase 4: System prompt management (file, caching, hot-reload)
 Phase 5: Button actions + marking as read
-Phase 6: Future – Gmail support via IEmailProvider interface
+Phase 6: Edit messages in place instead of sending new ones
+Phase 7: Future – Gmail support via IEmailProvider interface
 
 ## Non-Functional Requirements
 - Run on Azure Web App (Container) — deployed as a Docker image published to a container registry
