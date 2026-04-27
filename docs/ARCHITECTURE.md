@@ -397,12 +397,12 @@ IReadOnlyCollection<ChatId> GetAuthenticatedChatIds();
 | **Hosted Service** | ScheduledDigestService | Twice-daily background trigger |
 | **Options Pattern** | ScheduleOptions | Delivery time configuration |
 
-### Adding Button Actions (Phase 5)
+### Adding Button Actions (Phase 8)
 1. Create handler for `UpdateType.CallbackQuery`
 2. Register in `BotPollingService.ReceiverOptions`
 3. Route in `UpdateHandler`
 
-### Adding Gmail Support (Phase 6)
+### Adding Gmail Support (Phase 7)
 1. Create `GmailEmailProvider : IEmailProvider`
 2. Register in `InfraSetup.cs`
 3. No changes needed in `UpdateHandler` or other layers

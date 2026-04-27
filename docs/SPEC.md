@@ -13,10 +13,10 @@ Phase 1: Telegram bot skeleton with basic commands
 Phase 2: Microsoft Graph integration to load unread emails
 Phase 3: OpenAI integration for generating digests
 Phase 4: System prompt management (file, caching, hot-reload)
-Phase 5: Button actions + marking as read
-Phase 6: Edit messages in place instead of sending new ones
-Phase 7: Scheduled digest delivery (twice-daily push to all registered chats)
-Phase 8: Future – Gmail support via IEmailProvider interface
+Phase 5: Edit messages in place instead of sending new ones
+Phase 6: Scheduled digest delivery (twice-daily push to all registered chats)
+Phase 7: Future – Gmail support via IEmailProvider interface
+Phase 8: Button actions + marking as read
 
 ## Non-Functional Requirements
 - Run on Azure Web App (Container) — deployed as a Docker image published to a container registry
