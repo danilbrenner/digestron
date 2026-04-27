@@ -4,7 +4,7 @@ namespace Digestron.Service.Abstractions;
 
 public interface IEmailService
 {
-    Task HandleGetUnreadEmailCountAsync(MessageContext context, CancellationToken ct = default);
-    Task HandleDigestAsync(MessageContext context, CancellationToken ct = default);
+    Task HandleGetUnreadEmailCountAsync(CommandContext context, CancellationToken ct = default);
+    Task HandleDigestAsync(CommandContext context, CancellationToken ct = default);
 }
 

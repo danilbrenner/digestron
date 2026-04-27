@@ -27,7 +27,7 @@ public class UpdateHandlerTests
     {
         await _sut.HandleUpdateAsync(Mock.Of<ITelegramBotClient>(), BuildTextUpdate("/start"), default);
 
-        _messageResponder.Verify(r => r.SendStartMessageAsync(It.IsAny<MessageContext>(), It.IsAny<CancellationToken>()), Times.Once);
+        _messageResponder.Verify(r => r.SendStartMessageAsync(It.IsAny<CommandContext>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class UpdateHandlerTests
     {
         await _sut.HandleUpdateAsync(Mock.Of<ITelegramBotClient>(), BuildTextUpdate("/help"), default);
 
-        _messageResponder.Verify(r => r.SendHelpMessageAsync(It.IsAny<MessageContext>(), It.IsAny<CancellationToken>()), Times.Once);
+        _messageResponder.Verify(r => r.SendHelpMessageAsync(It.IsAny<CommandContext>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public class UpdateHandlerTests
     {
         await _sut.HandleUpdateAsync(Mock.Of<ITelegramBotClient>(), BuildTextUpdate("/digest"), default);
 
-        _emailService.Verify(s => s.HandleDigestAsync(It.IsAny<MessageContext>(), It.IsAny<CancellationToken>()), Times.Once);
+        _emailService.Verify(s => s.HandleDigestAsync(It.IsAny<CommandContext>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class UpdateHandlerTests
     {
         await _sut.HandleUpdateAsync(Mock.Of<ITelegramBotClient>(), BuildTextUpdate("/unread"), default);
 
-        _emailService.Verify(s => s.HandleGetUnreadEmailCountAsync(It.IsAny<MessageContext>(), It.IsAny<CancellationToken>()), Times.Once);
+        _emailService.Verify(s => s.HandleGetUnreadEmailCountAsync(It.IsAny<CommandContext>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class UpdateHandlerTests
     {
         await _sut.HandleUpdateAsync(Mock.Of<ITelegramBotClient>(), BuildTextUpdate("/unknown"), default);
 
-        _messageResponder.Verify(r => r.SendUnknownCommandMessageAsync(It.IsAny<MessageContext>(), It.IsAny<CancellationToken>()), Times.Once);
+        _messageResponder.Verify(r => r.SendUnknownCommandMessageAsync(It.IsAny<CommandContext>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public class UpdateHandlerTests
         await _sut.HandleUpdateAsync(Mock.Of<ITelegramBotClient>(), BuildTextUpdate("/reloadprompt"), default);
 
         _digestService.Verify(s => s.ReloadPrompt(), Times.Once);
-        _messageResponder.Verify(r => r.SendPromptReloadedMessageAsync(It.IsAny<MessageContext>(), It.IsAny<CancellationToken>()), Times.Once);
+        _messageResponder.Verify(r => r.SendPromptReloadedMessageAsync(It.IsAny<CommandContext>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

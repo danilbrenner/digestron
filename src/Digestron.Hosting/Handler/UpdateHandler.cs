@@ -37,7 +37,7 @@ public sealed class UpdateHandler(
         return Task.CompletedTask;
     }
 
-    private async Task HandleReloadPromptAsync(MessageContext context, CancellationToken ct)
+    private async Task HandleReloadPromptAsync(CommandContext context, CancellationToken ct)
     {
         await digestService.ReloadPrompt();
         await messageResponder.SendPromptReloadedMessageAsync(context, ct);
@@ -48,7 +48,7 @@ public static class UpdateHandlerExtensions
 {
     public static bool ParseUpdate(
         this Update update,
-        [NotNullWhen(true)] out MessageContext? context)
+        [NotNullWhen(true)] out CommandContext? context)
     {
         context = null;
 
@@ -67,11 +67,11 @@ public static class UpdateHandlerExtensions
         return true;
     }
 
-    private static MessageContext ToContext(this Update update, MessageContent content)
+    private static CommandContext ToContext(this Update update, MessageContent content)
     {
         var message = update.Message;
         var from = message?.From;
-        return new MessageContext
+        return new CommandContext
         {
             ChatId = message?.Chat.Id ?? 0,
             UserId = from?.Id ?? 0,

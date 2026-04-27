@@ -7,14 +7,14 @@ namespace Digestron.Hosting.Handler;
 
 public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageResponder
 {
-    public Task SendStartMessageAsync(MessageContext context, CancellationToken ct) =>
+    public Task SendStartMessageAsync(CommandContext context, CancellationToken ct) =>
         botClient.SendMessage(
             context.ChatId,
             $"👋 *Welcome to Digestron!*\n\nI help you stay on top of your inbox. Use /help to see what I can do.\n\nYou're chat ID is: `{context.ChatId}`",
             parseMode: ParseMode.MarkdownV2,
             cancellationToken: ct);
 
-    public Task SendHelpMessageAsync(MessageContext context, CancellationToken ct) =>
+    public Task SendHelpMessageAsync(CommandContext context, CancellationToken ct) =>
         botClient.SendMessage(
             context.ChatId,
             """
@@ -28,26 +28,30 @@ public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageRes
             parseMode: ParseMode.MarkdownV2,
             cancellationToken: ct);
 
-    public Task SendDigestLoadingMessageAsync(MessageContext context, CancellationToken ct) =>
-        botClient.SendMessage(
+    public async Task SendDigestLoadingMessageAsync(CommandContext context, CancellationToken ct)
+    {
+        var message = await botClient.SendMessage(
             context.ChatId,
             "⏳ Fetching digest...",
             cancellationToken: ct);
 
-    public Task SendUnreadCountMessageAsync(MessageContext context, int count, CancellationToken ct) =>
+        context.ResponseMessageId = message.Id;
+    }
+
+    public Task SendUnreadCountMessageAsync(CommandContext context, int count, CancellationToken ct) =>
         botClient.SendMessage(
             context.ChatId,
             $"📬 You have *{count}* unread email(s).",
             parseMode: ParseMode.Markdown,
             cancellationToken: ct);
 
-    public Task SendUnknownCommandMessageAsync(MessageContext context, CancellationToken ct) =>
+    public Task SendUnknownCommandMessageAsync(CommandContext context, CancellationToken ct) =>
         botClient.SendMessage(
             context.ChatId,
             "❓ Unknown command. Use /help to see available commands.",
             cancellationToken: ct);
 
-    public async Task SendDeviceAuthenticationRequestAsync(MessageContext context, Uri verificationUri, string userCode,
+    public async Task SendDeviceAuthenticationRequestAsync(CommandContext context, Uri verificationUri, string userCode,
         DateTimeOffset expiresOn, CancellationToken ct)
     {
         var message =
@@ -70,7 +74,7 @@ public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageRes
             cancellationToken: ct);
     }
 
-    public Task SendDigestAsync(MessageContext context, string markdownText, int totalTokens, CancellationToken ct)
+    public Task SendDigestAsync(CommandContext context, string markdownText, int totalTokens, CancellationToken ct)
     {
         var text = totalTokens > 0
             ? $"{markdownText}\n\n_🔢 Tokens used: {totalTokens}_"
@@ -83,7 +87,21 @@ public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageRes
             cancellationToken: ct);
     }
 
-    public Task SendPromptReloadedMessageAsync(MessageContext context, CancellationToken ct) =>
+    public Task EditDigestMessageAsync(CommandContext context, string markdownText, int totalTokens, CancellationToken ct)
+    {
+        var text = totalTokens > 0
+            ? $"{markdownText}\n\n_🔢 Tokens used: {totalTokens}_"
+            : markdownText;
+
+        return botClient.EditMessageText(
+            context.ChatId,
+            context.ResponseMessageId!.Value,
+            text,
+            parseMode: ParseMode.Markdown,
+            cancellationToken: ct);
+    }
+
+    public Task SendPromptReloadedMessageAsync(CommandContext context, CancellationToken ct) =>
         botClient.SendMessage(
             context.ChatId,
             "✅ System prompt reloaded.",

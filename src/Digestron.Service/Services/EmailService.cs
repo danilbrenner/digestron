@@ -11,7 +11,7 @@ public class EmailService(
     IDigestService digestService
     ) : IEmailService
 {
-    public async Task HandleGetUnreadEmailCountAsync(MessageContext context, CancellationToken ct = default)
+    public async Task HandleGetUnreadEmailCountAsync(CommandContext context, CancellationToken ct = default)
     {
         logger.LogInformation("Fetching unread email count for user {UserId}", context.UserId);
         
@@ -23,7 +23,7 @@ public class EmailService(
         logger.LogInformation("Successfully sent unread count message to chat {ChatId}", context.ChatId);
     }
 
-    public async Task HandleDigestAsync(MessageContext context, CancellationToken ct = default)
+    public async Task HandleDigestAsync(CommandContext context, CancellationToken ct = default)
     {
         logger.LogInformation("Handling digest request for user {UserId}", context.UserId);
 
@@ -34,7 +34,7 @@ public class EmailService(
 
         if (emails.Count == 0)
         {
-            await messageResponder.SendDigestAsync(context, "✅ Your inbox is empty — no unread emails!", 0, ct);
+            await messageResponder.EditDigestMessageAsync(context, "✅ Your inbox is empty — no unread emails!", 0, ct);
             return;
         }
 
@@ -42,6 +42,6 @@ public class EmailService(
         logger.LogInformation("Generated digest with {SuggestedCount} low-priority IDs. Tokens used: {TotalTokens}",
             result.SuggestedReadIds.Count, result.TotalTokens);
 
-        await messageResponder.SendDigestAsync(context, result.MarkdownText, result.TotalTokens, ct);
+        await messageResponder.EditDigestMessageAsync(context, result.MarkdownText, result.TotalTokens, ct);
     }
 }
