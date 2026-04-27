@@ -80,11 +80,8 @@ public class EmailServiceTests
             r => r.SendDigestLoadingMessageAsync(context, It.IsAny<CancellationToken>()),
             Times.Once);
         _messageResponder.Verify(
-            r => r.EditDigestMessageAsync(context, digestResult.MarkdownText, digestResult.TotalTokens, It.IsAny<CancellationToken>()),
+            r => r.SendDigestAsync(context, digestResult.MarkdownText, digestResult.TotalTokens, It.IsAny<CancellationToken>()),
             Times.Once);
-        _messageResponder.Verify(
-            r => r.SendDigestAsync(It.IsAny<CommandContext>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     [Fact]
@@ -105,11 +102,8 @@ public class EmailServiceTests
 
         _digestService.VerifyNoOtherCalls();
         _messageResponder.Verify(
-            r => r.EditDigestMessageAsync(context, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            r => r.SendDigestAsync(context, It.IsAny<string>(), 0, It.IsAny<CancellationToken>()),
             Times.Once);
-        _messageResponder.Verify(
-            r => r.SendDigestAsync(It.IsAny<CommandContext>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     private CommandContext BuildContext(string command) => new()
@@ -119,4 +113,68 @@ public class EmailServiceTests
         UserName = _fixture.Create<string>(),
         Content = new CommandMessageContent(command)
     };
+
+    [Fact]
+    public async Task HandleDigestToAllAsync_CallsGetAuthenticatedChatIds()
+    {
+        _emailProvider.Setup(p => p.GetAuthenticatedChatIds()).Returns([]);
+
+        await _sut.HandleDigestToAllAsync();
+
+        _emailProvider.Verify(p => p.GetAuthenticatedChatIds(), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleDigestToAllAsync_SendsDigestToEachAuthenticatedChat()
+    {
+        var chatIds = new long[] { 1001L, 1002L };
+        _emailProvider.Setup(p => p.GetAuthenticatedChatIds()).Returns(chatIds);
+        _emailProvider
+            .Setup(p => p.GetUnreadEmailsAsync(It.IsAny<CommandContext>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        await _sut.HandleDigestToAllAsync();
+
+        foreach (var chatId in chatIds)
+        {
+            var id = chatId;
+            _messageResponder.Verify(
+                r => r.SendDigestLoadingMessageAsync(It.Is<CommandContext>(ctx => ctx.ChatId == id), It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+    }
+
+    [Fact]
+    public async Task HandleDigestToAllAsync_ExceptionOnOneChat_ContinuesToOtherChats()
+    {
+        var chatIds = new long[] { 1001L, 1002L, 1003L };
+        _emailProvider.Setup(p => p.GetAuthenticatedChatIds()).Returns(chatIds);
+        _emailProvider
+            .Setup(p => p.GetUnreadEmailsAsync(It.Is<CommandContext>(ctx => ctx.ChatId == 1002L), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Graph error"));
+        _emailProvider
+            .Setup(p => p.GetUnreadEmailsAsync(It.Is<CommandContext>(ctx => ctx.ChatId != 1002L), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        await _sut.HandleDigestToAllAsync();
+
+        _messageResponder.Verify(
+            r => r.SendDigestLoadingMessageAsync(It.Is<CommandContext>(ctx => ctx.ChatId == 1001L), It.IsAny<CancellationToken>()),
+            Times.Once);
+        _messageResponder.Verify(
+            r => r.SendDigestLoadingMessageAsync(It.Is<CommandContext>(ctx => ctx.ChatId == 1003L), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleDigestToAllAsync_NoChatIds_DoesNotDeliverAnyDigest()
+    {
+        _emailProvider.Setup(p => p.GetAuthenticatedChatIds()).Returns(Array.Empty<long>());
+
+        await _sut.HandleDigestToAllAsync();
+
+        _messageResponder.Verify(
+            r => r.SendDigestLoadingMessageAsync(It.IsAny<CommandContext>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
 }

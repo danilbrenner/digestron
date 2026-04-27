@@ -37,6 +37,7 @@ try
         .AddSingleton<IMessageResponder, MessageResponder>()
         .AddSingleton<UpdateHandler>()
         .AddHostedService<BotPollingService>()
+        .AddHostedService<ScheduledDigestService>()
         .AddHealthChecks();
 
     var app = builder.Build();
