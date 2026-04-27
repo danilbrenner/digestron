@@ -1,10 +1,10 @@
 # Phase 6: Scheduled Digest Delivery
 
-- [ ] **p6-schedule-options** — Add `ScheduleOptions` and `GetAuthenticatedChatIds` to the provider  
+- [x] **p6-schedule-options** — Add `ScheduleOptions` and `GetAuthenticatedChatIds` to the provider  
   Create `Digestron.Infra/Options/ScheduleOptions.cs` with a `string[] DeliveryTimesUtc` property defaulting to `["08:00", "18:00"]`, bound from the `Schedule:` configuration section. Add `IReadOnlyCollection<long> GetAuthenticatedChatIds()` to `IEmailProvider` in `Digestron.Service/Abstractions/IEmailProvider.cs`. Implement it in `GraphEmailProvider` by returning the keys of the existing `GraphClientsContainer` `ConcurrentDictionary`. Register `ScheduleOptions` in `Program.cs` via `services.Configure<ScheduleOptions>(configuration.GetSection("Schedule"))`.
 
-- [ ] **p6-scheduled-service** — Implement `ScheduledDigestService` as a hosted service  
+- [x] **p6-scheduled-service** — Implement `ScheduledDigestService` as a hosted service  
   Create `Digestron.Hosting/ScheduledDigestService.cs` implementing `IHostedService`. In `StartAsync`, parse `ScheduleOptions.DeliveryTimesUtc` into `TimeOnly` values; log an error and fall back to `["08:00", "18:00"]` for any entry that fails to parse. Run a `Task.Delay`-based loop that calculates the time until the next scheduled delivery (in UTC), waits, then calls the delivery routine. Stop gracefully when the `CancellationToken` is cancelled. Register `ScheduledDigestService` in `Program.cs` via `services.AddHostedService<ScheduledDigestService>()`.
 
-- [ ] **p6-delivery-loop** — Implement per-chat digest delivery with error isolation  
+- [x] **p6-delivery-loop** — Implement per-chat digest delivery with error isolation  
   Inside `ScheduledDigestService`, implement the delivery routine: call `emailProvider.GetAuthenticatedChatIds()` to retrieve all authenticated chat IDs; if none, log and return. For each chat ID, construct a minimal `MessageContext` and call `emailService.HandleDigestAsync(context, ct)` sequentially. Wrap each chat's call in a `try/catch`; log the exception and continue to the next chat so that one failing delivery does not stop others. Add unit tests: verify `GetAuthenticatedChatIds` is called on each scheduled tick; verify `HandleDigestAsync` is called once per authenticated chat; verify an exception on one chat does not prevent `HandleDigestAsync` from being called for the remaining chats; verify no delivery occurs when `GetAuthenticatedChatIds` returns an empty collection.
