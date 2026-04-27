@@ -18,7 +18,7 @@ public sealed class GraphEmailProvider(
 
     private static readonly ConcurrentDictionary<long, GraphServiceClient> GraphClientsContainer = new();
 
-    private GraphServiceClient CreateGraphClient(MessageContext context)
+    private GraphServiceClient CreateGraphClient(CommandContext context)
     {
         var credential = new DeviceCodeCredential(new DeviceCodeCredentialOptions
         {
@@ -35,11 +35,11 @@ public sealed class GraphEmailProvider(
         return new GraphServiceClient(credential);
     }
 
-    private GraphServiceClient GetGraphClient(MessageContext context)
+    private GraphServiceClient GetGraphClient(CommandContext context)
         => GraphClientsContainer.GetOrAdd(context.ChatId, _ => CreateGraphClient(context));
 
     public async Task<IReadOnlyList<EmailMessage>> GetUnreadEmailsAsync(
-        MessageContext context,
+        CommandContext context,
         int max,
         CancellationToken ct = default)
     {

@@ -4,5 +4,5 @@ namespace Digestron.Service.Abstractions;
 
 public interface IEmailProvider
 {
-    Task<IReadOnlyList<EmailMessage>> GetUnreadEmailsAsync(MessageContext context, int max, CancellationToken ct = default);
+    Task<IReadOnlyList<EmailMessage>> GetUnreadEmailsAsync(CommandContext context, int max, CancellationToken ct = default);
 }

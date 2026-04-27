@@ -61,7 +61,12 @@ public class EmailServiceTests
         var context = BuildContext("/digest");
         var emails = _fixture.CreateMany<EmailMessage>(3).ToList();
         var digestResult = new DigestResult("*Digest*", [emails[0].Id]);
+        const int fakeMessageId = 42;
 
+        _messageResponder
+            .Setup(r => r.SendDigestLoadingMessageAsync(context, It.IsAny<CancellationToken>()))
+            .Callback(() => context.ResponseMessageId = fakeMessageId)
+            .Returns(Task.CompletedTask);
         _emailProvider
             .Setup(p => p.GetUnreadEmailsAsync(context, 50, It.IsAny<CancellationToken>()))
             .ReturnsAsync(emails);
@@ -75,15 +80,23 @@ public class EmailServiceTests
             r => r.SendDigestLoadingMessageAsync(context, It.IsAny<CancellationToken>()),
             Times.Once);
         _messageResponder.Verify(
-            r => r.SendDigestAsync(context, digestResult.MarkdownText, digestResult.TotalTokens, It.IsAny<CancellationToken>()),
+            r => r.EditDigestMessageAsync(context, digestResult.MarkdownText, digestResult.TotalTokens, It.IsAny<CancellationToken>()),
             Times.Once);
+        _messageResponder.Verify(
+            r => r.SendDigestAsync(It.IsAny<CommandContext>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
     public async Task HandleDigestAsync_NoEmails_SendsEmptyInboxMessage()
     {
         var context = BuildContext("/digest");
+        const int fakeMessageId = 99;
 
+        _messageResponder
+            .Setup(r => r.SendDigestLoadingMessageAsync(context, It.IsAny<CancellationToken>()))
+            .Callback(() => context.ResponseMessageId = fakeMessageId)
+            .Returns(Task.CompletedTask);
         _emailProvider
             .Setup(p => p.GetUnreadEmailsAsync(context, 50, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
@@ -92,11 +105,14 @@ public class EmailServiceTests
 
         _digestService.VerifyNoOtherCalls();
         _messageResponder.Verify(
-            r => r.SendDigestAsync(context, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            r => r.EditDigestMessageAsync(context, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Once);
+        _messageResponder.Verify(
+            r => r.SendDigestAsync(It.IsAny<CommandContext>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
-    private MessageContext BuildContext(string command) => new()
+    private CommandContext BuildContext(string command) => new()
     {
         ChatId = _fixture.Create<long>(),
         UserId = _fixture.Create<long>(),
