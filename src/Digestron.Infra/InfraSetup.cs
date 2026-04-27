@@ -13,6 +13,7 @@ public static class InfraSetup
         => services
             .Configure<GraphOptions>(configuration.GetSection(GraphOptions.SectionName))
             .Configure<OpenAiOptions>(configuration.GetSection(OpenAiOptions.SectionName))
+            .Configure<ScheduleOptions>(configuration.GetSection(ScheduleOptions.SectionName))
             .AddSingleton<IEmailProvider, GraphEmailProvider>()
             .AddSingleton<IDigestService, OpenAiDigestService>();
 }

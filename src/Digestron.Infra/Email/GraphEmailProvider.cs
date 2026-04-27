@@ -74,6 +74,9 @@ public sealed class GraphEmailProvider(
         return emails;
     }
 
+    public IReadOnlyCollection<long> GetAuthenticatedChatIds()
+        => GraphClientsContainer.Keys.ToList();
+
     private static string Truncate(string value, int maxLength) =>
         value.Length <= maxLength ? value : value[..maxLength];
 }
