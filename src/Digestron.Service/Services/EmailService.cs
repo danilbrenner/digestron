@@ -34,7 +34,7 @@ public class EmailService(
 
         if (emails.Count == 0)
         {
-            await messageResponder.EditDigestMessageAsync(context, "✅ Your inbox is empty — no unread emails!", 0, ct);
+            await messageResponder.SendDigestAsync(context, "✅ Your inbox is empty — no unread emails!", 0, ct);
             return;
         }
 
@@ -42,6 +42,30 @@ public class EmailService(
         logger.LogInformation("Generated digest with {SuggestedCount} low-priority IDs. Tokens used: {TotalTokens}",
             result.SuggestedReadIds.Count, result.TotalTokens);
 
-        await messageResponder.EditDigestMessageAsync(context, result.MarkdownText, result.TotalTokens, ct);
+        await messageResponder.SendDigestAsync(context, result.MarkdownText, result.TotalTokens, ct);
+    }
+
+    public async Task HandleDigestToAllAsync(CancellationToken ct = default)
+    {
+        var chatIds = emailProvider.GetAuthenticatedChatIds();
+        foreach (var chatId in chatIds)
+        {
+            try
+            {
+                var context = new CommandContext
+                {
+                    ChatId = chatId,
+                    UserId = 0,
+                    UserName = "Scheduled",
+                    Content = new CommandMessageContent("/digest")
+                };
+
+                await HandleDigestAsync(context, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error delivering scheduled digest to chat {ChatId}", chatId);
+            }
+        }
     }
 }

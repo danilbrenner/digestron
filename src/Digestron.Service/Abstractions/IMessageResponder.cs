@@ -11,7 +11,6 @@ public interface IMessageResponder
     Task SendUnknownCommandMessageAsync(CommandContext context, CancellationToken ct);
     Task SendDeviceAuthenticationRequestAsync(CommandContext context, Uri verificationUri, string userCode, DateTimeOffset expiresOn, CancellationToken ct);
     Task SendDigestAsync(CommandContext context, string markdownText, int totalTokens, CancellationToken ct);
-    Task EditDigestMessageAsync(CommandContext context, string markdownText, int totalTokens, CancellationToken ct);
     Task SendPromptReloadedMessageAsync(CommandContext context, CancellationToken ct);
 }
 

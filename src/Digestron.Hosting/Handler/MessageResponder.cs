@@ -48,13 +48,8 @@ public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageRes
              """,
             ParseMode.Markdown, ct);
 
-    public async Task SendDigestAsync(CommandContext context, string markdownText, int totalTokens, CancellationToken ct)
-    {
-        var text = totalTokens > 0 ? $"{markdownText}\n\n_🔢 Tokens used: {totalTokens}_" : markdownText;
-        await SendMessageAsync(context, text, ParseMode.Markdown, ct);
-    }
-
-    public async Task EditDigestMessageAsync(CommandContext context, string markdownText, int totalTokens, CancellationToken ct)
+    public async Task SendDigestAsync(CommandContext context, string markdownText, int totalTokens,
+        CancellationToken ct)
     {
         var text = totalTokens > 0 ? $"{markdownText}\n\n_🔢 Tokens used: {totalTokens}_" : markdownText;
         await SendMessageAsync(context, text, ParseMode.Markdown, ct);
@@ -69,7 +64,8 @@ public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageRes
             context switch
             {
                 { ResponseMessageId: { } messageId } =>
-                    await botClient.EditMessageText(context.ChatId, messageId, text, parseMode: parseMode, cancellationToken: ct),
+                    await botClient.EditMessageText(context.ChatId, messageId, text, parseMode: parseMode,
+                        cancellationToken: ct),
                 _ =>
                     await botClient.SendMessage(context.ChatId, text, parseMode: parseMode, cancellationToken: ct)
             };

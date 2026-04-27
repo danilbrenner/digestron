@@ -7,135 +7,47 @@ using Microsoft.Extensions.Options;
 
 namespace Digestron.Hosting;
 
-public sealed class ScheduledDigestService : IHostedService
+public sealed class ScheduledDigestService(
+    IEmailService emailService,
+    IOptions<ScheduleOptions> scheduleOptions,
+    ILogger<ScheduledDigestService> logger) : BackgroundService
 {
-    private static readonly TimeOnly[] DefaultDeliveryTimes = [new(8, 0), new(18, 0)];
-
-    private readonly IEmailProvider _emailProvider;
-    private readonly IEmailService _emailService;
-    private readonly ILogger<ScheduledDigestService> _logger;
-    private readonly TimeOnly[] _deliveryTimes;
-
-    private Task? _runTask;
-    private CancellationTokenSource? _cts;
-
-    public ScheduledDigestService(
-        IEmailProvider emailProvider,
-        IEmailService emailService,
-        IOptions<ScheduleOptions> scheduleOptions,
-        ILogger<ScheduledDigestService> logger)
+    protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        _emailProvider = emailProvider;
-        _emailService = emailService;
-        _logger = logger;
-        _deliveryTimes = ParseDeliveryTimes(scheduleOptions.Value.DeliveryTimesUtc);
-    }
-
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _runTask = RunAsync(_cts.Token);
-        return Task.CompletedTask;
-    }
-
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        if (_cts is not null)
-            await _cts.CancelAsync();
-
-        if (_runTask is not null)
-            await Task.WhenAny(_runTask, Task.Delay(Timeout.Infinite, cancellationToken));
-    }
-
-    internal async Task DeliverToAllChatsAsync(CancellationToken ct)
-    {
-        var chatIds = _emailProvider.GetAuthenticatedChatIds();
-
-        if (chatIds.Count == 0)
+        var deliveryTimes = ParseDeliveryTimes(scheduleOptions.Value.DeliveryTimesUtc);
+        if (deliveryTimes.Length == 0)
         {
-            _logger.LogInformation("No authenticated chats — skipping scheduled digest delivery");
+            logger.LogWarning("No delivery times configured");
             return;
         }
 
-        foreach (var chatId in chatIds)
+        var ix = 0;
+        while (!ct.IsCancellationRequested)
         {
-            try
-            {
-                var context = new CommandContext
-                {
-                    ChatId = chatId,
-                    UserId = 0,
-                    UserName = "Scheduled",
-                    Content = new CommandMessageContent("/digest")
-                };
+            ix = (ix + 1) % deliveryTimes.Length;
+            var delay = GetDelayUntil(deliveryTimes[ix]);
 
-                await _emailService.HandleDigestAsync(context, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error delivering scheduled digest to chat {ChatId}", chatId);
-            }
+            logger.LogInformation("Next scheduled digest delivery in {Delay}", delay);
+
+            await Task.Delay(delay, ct);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            await emailService.HandleDigestToAllAsync(ct);
         }
     }
 
-    private async Task RunAsync(CancellationToken ct)
+    private static TimeSpan GetDelayUntil(TimeOnly target)
     {
-        try
-        {
-            while (!ct.IsCancellationRequested)
-            {
-                var delay = GetDelayUntilNextDelivery();
-                _logger.LogInformation("Next scheduled digest delivery in {Delay}", delay);
-
-                await Task.Delay(delay, ct);
-
-                if (!ct.IsCancellationRequested)
-                    await DeliverToAllChatsAsync(ct);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Graceful shutdown
-        }
+        var delay = target - TimeOnly.FromDateTime(DateTime.UtcNow);
+        return delay <= TimeSpan.Zero ? delay.Add(TimeSpan.FromHours(24)) : delay;
     }
 
-    private TimeSpan GetDelayUntilNextDelivery()
-    {
-        var now = TimeOnly.FromDateTime(DateTime.UtcNow);
-        var today = DateTime.UtcNow.Date;
-
-        var nextTime = _deliveryTimes
-            .Select(t => today.Add(t.ToTimeSpan()))
-            .Concat(_deliveryTimes.Select(t => today.AddDays(1).Add(t.ToTimeSpan())))
-            .Where(dt => dt > DateTime.UtcNow)
-            .Min();
-
-        return nextTime - DateTime.UtcNow;
-    }
-
-    private TimeOnly[] ParseDeliveryTimes(string[] rawTimes)
-    {
-        if (rawTimes.Length == 0)
-        {
-            _logger.LogInformation("No delivery times configured, using defaults: 08:00, 18:00 UTC");
-            return DefaultDeliveryTimes;
-        }
-
-        var parsed = new List<TimeOnly>(rawTimes.Length);
-
-        foreach (var raw in rawTimes)
-        {
-            if (TimeOnly.TryParseExact(raw, "HH:mm", out var time))
-            {
-                parsed.Add(time);
-            }
-            else
-            {
-                _logger.LogError("Invalid delivery time '{Value}' — falling back to defaults 08:00, 18:00 UTC", raw);
-                return DefaultDeliveryTimes;
-            }
-        }
-
-        return [.. parsed];
-    }
+    private static TimeOnly[] ParseDeliveryTimes(string[] rawTimes) =>
+        rawTimes
+            .Select(raw => TimeOnly.TryParseExact(raw, "HH:mm", out var t) ? t : (TimeOnly?)null)
+            .Where(t => t != null)
+            .Select(t => t!.Value)
+            .ToArray();
 }
