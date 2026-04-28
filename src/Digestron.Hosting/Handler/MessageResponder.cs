@@ -1,6 +1,7 @@
 using Digestron.Service.Abstractions;
 using Digestron.Domain;
 using Telegram.Bot;
+using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types.Enums;
 
 namespace Digestron.Hosting.Handler;
@@ -60,16 +61,30 @@ public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageRes
 
     private async Task SendMessageAsync(CommandContext context, string text, ParseMode parseMode, CancellationToken ct)
     {
-        var message =
-            context switch
-            {
-                { ResponseMessageId: { } messageId } =>
-                    await botClient.EditMessageText(context.ChatId, messageId, text, parseMode: parseMode,
-                        cancellationToken: ct),
-                _ =>
-                    await botClient.SendMessage(context.ChatId, text, parseMode: parseMode, cancellationToken: ct)
-            };
+        try
+        {
+            var message =
+                context switch
+                {
+                    { ResponseMessageId: { } messageId } =>
+                        await botClient.EditMessageText(context.ChatId, messageId, text, parseMode: parseMode,
+                            cancellationToken: ct),
+                    _ =>
+                        await botClient.SendMessage(context.ChatId, text, parseMode: parseMode,
+                            cancellationToken: ct)
+                };
 
-        context.ResponseMessageId = message.MessageId;
+            context.ResponseMessageId = message.MessageId;
+        }
+        catch (ApiRequestException ex) when (parseMode != ParseMode.None &&
+                                             ex.Message.Contains("can't parse entities",
+                                                 StringComparison.OrdinalIgnoreCase))
+        {
+            await botClient.SendMessage(
+                context.ChatId,
+                "⚠️ Failed to render the digest — the response contained characters that couldn't be formatted.",
+                parseMode: ParseMode.None,
+                cancellationToken: ct);
+        }
     }
 }
