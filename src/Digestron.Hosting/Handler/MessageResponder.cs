@@ -82,9 +82,10 @@ public sealed class MessageResponder(ITelegramBotClient botClient) : IMessageRes
         {
             await botClient.SendMessage(
                 context.ChatId,
-                "⚠️ Failed to render the digest — the response contained characters that couldn't be formatted.",
+                $"⚠️ Failed to render the digest — the response contained characters that couldn't be formatted.\n{text}",
                 parseMode: ParseMode.None,
                 cancellationToken: ct);
+            throw;
         }
     }
 }
